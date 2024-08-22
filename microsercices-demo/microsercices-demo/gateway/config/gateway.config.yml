@@ -1,0 +1,54 @@
+http:
+  port: 8080
+apiEndpoints:
+  user:
+    host: localhost
+    paths: ['/user', '/user/*']
+  catalog:
+    host: localhost
+    paths: ['/catalog', '/catalog/*']
+  cart:
+    host: localhost
+    paths: ['/cart', '/cart/*']
+serviceEndpoints:
+  userService:
+    url: 'http://localhost:4000'
+  catalogService:
+    url: 'http://localhost:4001'
+  cartService:
+    url: 'http://localhost:4002'
+policies:
+  - cors
+  - expression
+  - key-auth
+  - log
+  - oauth2
+  - proxy
+  - rate-limit
+pipelines:
+  userPipeline:
+    apiEndpoints:
+      - user
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: userService
+              changeOrigin: true
+
+  catalogPipeline:
+    apiEndpoints:
+      - catalog
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: catalogService
+              changeOrigin: true
+
+  cartPipeline:
+    apiEndpoints:
+      - cart
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: cartService
+              changeOrigin: true

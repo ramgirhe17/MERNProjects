@@ -1,0 +1,9 @@
+{
+    "portno": 9999,
+    "sqlport": 3306,
+    "host": "localhost",
+    "database": "sunbeam",
+    "username": "root",
+    "password": "ramgirhe",
+    "encryptionKey": "superS3cr3t"
+}

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Document</title>
+    <link rel="stylesheet" href="bootstrap.min.css" />
+    <script src="jquery-3.7.1.min.js"></script>
+    <script src="bootstrap.min.js"></script>
+  </head>
+  <body onload="GetDataFromNodeServer() , getToken()">
+    <div class="container">
+      <center>
+        <br />
+        <div class="table-responsive">
+          <table
+            id="myTableInputs"
+            class="table table-bordered"
+            style="text-align: center"
+            border="1"
+          >
+            <tr>
+              <td>Empno</td>
+              <td>
+                <input type="number" id="txtNo" />
+              </td>
+            </tr>
+            <tr>
+              <td>Name</td>
+              <td>
+                <input type="text" id="txtName" />
+              </td>
+            </tr>
+            <tr>
+              <td>job</td>
+              <td>
+                <input type="text" id="txtjob" />
+              </td>
+            </tr>
+            <tr>
+              <td>mgr</td>
+              <td>
+                <input type="number" id="txtmgr" />
+              </td>
+            </tr>
+            <tr>
+              <td>hiredate(1980-12-16)</td>
+              <td>
+                <input type="text" id="txthire" />
+              </td>
+            </tr>
+            <tr>
+              <td>sal</td>
+              <td>
+                <input type="number" id="txtsal" />
+              </td>
+            </tr>
+            <tr>
+              <td>comm</td>
+              <td>
+                <input type="number" id="txtcomm" />
+              </td>
+            </tr>
+            <tr>
+              <td>deptno</td>
+              <td>
+                <input type="number" id="txtdeptno" />
+              </td>
+            </tr>
+            <tr>
+              <td colspan="4">
+                <button id="butAdd" onclick="Add()" class="btn btn-success">
+                  Add Record
+                </button>
+
+                <button id="butUpdate" onclick="Update()" class="btn btn-info">
+                  Update Record
+                </button>
+                <button id="butSort" onclick="Sort()" class="btn btn-info">
+                  Sort Record
+                </button>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <!-- <button class="btn btn-primary" onclick="GetDataFromNodeServer()">
+          Get All Data
+        </button> -->
+        <br />
+        <br />
+        <hr />
+        <div class="table-responsive" id="myTable"></div>
+      </center>
+    </div>
+    <script>
+      var refAddButton = document.getElementById("butAdd");
+      var refUpdateButton = document.getElementById("butUpdate");
+      refUpdateButton.disabled = "disabled";
+
+      function getToken() {
+        var helper = new XMLHttpRequest();
+        helper.onreadystatechange = function () {
+          if (helper.readyState == 4 && helper.status == 200) {
+            var result = JSON.parse(helper.responseText);
+            // console.log(result);
+            if (result.isValid == true) {
+              sessionStorage.setItem("token", result.token);
+            } else {
+              alert(result.message);
+            }
+          }
+        };
+        helper.open("GET", `http://127.0.0.1:9999/`);
+        helper.send();
+      }
+
+      function GetDataFromNodeServer() {
+        var helper = new XMLHttpRequest();
+        helper.onreadystatechange = () => {
+          if (helper.readyState == 4 && helper.status == 200) {
+            var users = JSON.parse(helper.responseText);
+            var refToMyTable = document.getElementById("myTable");
+            var row = ` <center><h1>All Emp</h1></center>
+          <table
+            class="table table-bordered"
+            style="text-align: center"
+            border="5"
+          >
+          <tr>
+          <td>EMPNO</td>
+          <td>ENAME</td>
+          <td>JOB</td>
+          <td>MGR</td>
+          <td>HIRE</td>
+          <td>SAL</td>
+          <td>COMM</td>
+          <td>DEPTNO</td>
+          <td>Action</td>
+        </tr>`;
+            for (let i = 0; i < users.length; i++) {
+              var user = users[i];
+              row += `<tr>
+                                    <td>${user.empno}</td>
+                                    <td>${user.ename}</td>
+                                    <td>${user.job}</td>
+                                    <td>${user.mgr}</td>
+                                    <td>${user.hire.split("T")[0]}</td>
+                                    <td>${user.sal}</td>
+                                    <td>${user.comm}</td>
+                                    <td>${user.deptno}</td>
+                                    <td>
+                                       <button onclick="Edit(${
+                                         user.empno
+                                       })" class="btn btn-warning">
+                                        Edit
+                                       </button>&nbsp;&nbsp;/&nbsp;&nbsp
+                                       <button onclick="Delete(${
+                                         user.empno
+                                       })" class="btn btn-danger">
+                                        Remove
+                                       </button>
+                                    </td>
+                        </tr>`;
+            }
+            row += `</table>`;
+            refToMyTable.innerHTML = row;
+          }
+        };
+        helper.open("GET", "http://127.0.0.1:9999/users");
+        var token = sessionStorage.getItem("token");
+        var authHeaderValue = "Bearer " + token;
+        helper.setRequestHeader("Authorization", authHeaderValue);
+        helper.send();
+      }
+
+      function Edit(empno) {
+        var helper = new XMLHttpRequest();
+        helper.onreadystatechange = () => {
+          if (helper.readyState == 4 && helper.status == 200) {
+            var result = JSON.parse(helper.responseText);
+
+            //since Get emps/No returns array ..check POSTMAN for verification
+            var empToBeEdited = result[0];
+            document.getElementById("txtNo").value = empToBeEdited.empno;
+            document.getElementById("txtName").value = empToBeEdited.ename;
+            document.getElementById("txtjob").value = empToBeEdited.job;
+            document.getElementById("txtmgr").value = empToBeEdited.mgr;
+            document.getElementById("txthire").value =
+              empToBeEdited.hire.split("T")[0];
+            document.getElementById("txtsal").value = empToBeEdited.sal;
+            document.getElementById("txtcomm").value = empToBeEdited.comm;
+            document.getElementById("txtdeptno").value = empToBeEdited.deptno;
+
+            refUpdateButton.disabled = null;
+            refAddButton.disabled = "disabled";
+          }
+        };
+        helper.open("GET", `http://127.0.0.1:9999/users/${empno}`);
+        var token = sessionStorage.getItem("token");
+        var authHeaderValue = "Bearer " + token;
+        helper.setRequestHeader("Authorization", authHeaderValue);
+        helper.send();
+      }
+      function Update() {
+        var helper = new XMLHttpRequest();
+        helper.onreadystatechange = function () {
+          if (helper.readyState === 4 && helper.status === 200) {
+            alert(JSON.stringify(requestBody));
+            if (JSON.parse(helper.responseText).affectedRows > 0) {
+              alert("Update successfully.");
+              GetDataFromNodeServer();
+            } else alert("failed to updated");
+
+            clearTheData();
+            refUpdateButton.disabled = "disabled";
+            refAddButton.disabled = null;
+          }
+        };
+        helper.open(
+          "PUT",
+          `http://127.0.0.1:9999/users/${parseInt(
+            document.getElementById("txtNo").value
+          )}`
+        );
+        var requestBody = {
+          ename: document.getElementById("txtName").value,
+          job: document.getElementById("txtjob").value,
+          mgr: document.getElementById("txtmgr").value,
+          hire: document.getElementById("txthire").value,
+          sal: document.getElementById("txtsal").value,
+          comm: document.getElementById("txtcomm").value,
+          deptno: document.getElementById("txtdeptno").value,
+        };
+
+        helper.setRequestHeader("Content-Type", "application/json");
+        var token = sessionStorage.getItem("token");
+        var authHeaderValue = "Bearer " + token;
+        helper.setRequestHeader("Authorization", authHeaderValue);
+        helper.send(JSON.stringify(requestBody));
+      }
+
+      function Delete(empno) {
+        var helper = new XMLHttpRequest();
+
+        helper.onreadystatechange = function () {
+          if (helper.readyState === 4 && helper.status === 200) {
+            if (JSON.parse(helper.responseText).affectedRows > 0) {
+              alert("deleted successfully.");
+              GetDataFromNodeServer();
+            } else alert("failed to delete");
+          }
+        };
+        helper.open("DELETE", `http://127.0.0.1:9999/users/${empno}`);
+        var token = sessionStorage.getItem("token");
+        var authHeaderValue = "Bearer " + token;
+        helper.setRequestHeader("Authorization", authHeaderValue);
+        helper.send();
+      }
+      function clearTheData() {
+        document.getElementById("txtNo").value = "";
+        document.getElementById("txtName").value = "";
+        document.getElementById("txtjob").value = "";
+        document.getElementById("txtmgr").value = "";
+        document.getElementById("txthire").value = "";
+        document.getElementById("txtsal").value = "";
+        document.getElementById("txtcomm").value = "";
+        document.getElementById("txtdeptno").value = "";
+        document.getElementById("txtNo").focus();
+      }
+
+      function Add() {
+        var helper = new XMLHttpRequest();
+        helper.onreadystatechange = function () {
+          if (helper.readyState === 4 && helper.status === 200) {
+            alert(JSON.stringify(requestBody));
+            if (JSON.parse(helper.responseText).affectedRows > 0) {
+              alert("added successfully.");
+              clearTheData();
+              GetDataFromNodeServer();
+            } else alert("failed to add");
+          }
+        };
+        helper.open("POST", "http://127.0.0.1:9999/users");
+        var requestBody = {
+          empno: document.getElementById("txtNo").value,
+          ename: document.getElementById("txtName").value,
+          job: document.getElementById("txtjob").value,
+          mgr: document.getElementById("txtmgr").value,
+          hire: document.getElementById("txthire").value,
+          sal: document.getElementById("txtsal").value,
+          comm: document.getElementById("txtcomm").value,
+          deptno: document.getElementById("txtdeptno").value,
+        };
+        helper.setRequestHeader("Content-Type", "application/json");
+        var token = sessionStorage.getItem("token");
+        var authHeaderValue = "Bearer " + token;
+        helper.setRequestHeader("Authorization", authHeaderValue);
+        helper.send(JSON.stringify(requestBody));
+      }
+
+      function Sort() {
+        var helper = new XMLHttpRequest();
+        helper.onreadystatechange = () => {
+          if (helper.readyState == 4 && helper.status == 200) {
+            var users = JSON.parse(helper.responseText);
+            var refToMyTable = document.getElementById("myTable");
+            var row = ` <center><h1>All Emp</h1></center>
+          <table
+            class="table table-bordered"
+            style="text-align: center"
+            border="5"
+          >
+          <tr>
+          <td>EMPNO</td>
+          <td>ENAME</td>
+          <td>JOB</td>
+          <td>MGR</td>
+          <td>HIRE</td>
+          <td>SAL</td>
+          <td>COMM</td>
+          <td>DEPTNO</td>
+          <td>Action</td>
+        </tr>`;
+            for (let i = 0; i < users.length; i++) {
+              var user = users[i];
+              row += `<tr>
+                                    <td>${user.empno}</td>
+                                    <td>${user.ename}</td>
+                                    <td>${user.job}</td>
+                                    <td>${user.mgr}</td>
+                                    <td>${user.hire.split("T")[0]}</td>
+                                    <td>${user.sal}</td>
+                                    <td>${user.comm}</td>
+                                    <td>${user.deptno}</td>
+                                    <td>
+                                       <button onclick="Edit(${
+                                         user.empno
+                                       })" class="btn btn-warning">
+                                        Edit
+                                       </button>&nbsp;&nbsp;/&nbsp;&nbsp
+                                       <button onclick="Delete(${
+                                         user.empno
+                                       })" class="btn btn-danger">
+                                        Remove
+                                       </button>
+                                    </td>
+                        </tr>`;
+            }
+            row += `</table>`;
+            refToMyTable.innerHTML = row;
+          }
+        };
+        if (document.getElementById("butSort").innerText == "Sort Record") {
+          helper.open("GET", "http://127.0.0.1:9999/users/SortedBySal");
+          document.getElementById("butSort").innerHTML = "Sort By EMPNO";
+        } else {
+          helper.open("GET", "http://127.0.0.1:9999/users/SortedByEmpNO");
+          document.getElementById("butSort").innerHTML = "Sort Record";
+        }
+        var token = sessionStorage.getItem("token");
+        var authHeaderValue = "Bearer " + token;
+        helper.setRequestHeader("Authorization", authHeaderValue);
+        helper.send();
+      }
+    </script>
+  </body>
+</html>
